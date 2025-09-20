@@ -1,0 +1,33 @@
+kb-set global "<Alt>Left" focus left
+kb-set global "<Alt>Right" focus right
+kb-set global "<Alt>Up" focus up
+kb-set global "<Alt>Down" focus down
+
+kb-set filetree p filetree chmod
+kb-set filetree n filetree newfile
+kb-set filetree "<Shift>n" filetree newdir
+kb-set filetree c filetree copy
+kb-set filetree d filetree delete
+kb-set filetree m filetree rename
+
+kb-set global "<Control>s" buffer save
+kb-set global "<Primary>s" buffer save
+kb-set global "<Primary>f" editor-search-window
+kb-set global "F3" editor-search-next
+kb-set global "<Primary>g" editor-go-to-line-window
+
+kb-set editor "<Control>q" buffer close
+kb-set editor "<Primary>q" buffer close
+kb-set editor "<Alt>q" buffer close
+kb-set editor "<Alt>comma" buffer prev
+kb-set editor "<Alt>period" buffer next
+
+kb-set editor "<Control>q" buffer close
+kb-set editor "<Primary>q" buffer close
+
+kb-set terminal "<Alt>comma" terminal prev
+kb-set terminal "<Alt>period" terminal next
+kb-set terminal "<Primary>n" terminal open
+kb-set terminal "<Primary>z" terminal split
+kb-set terminal "<Alt>q" terminal close
+
