@@ -14,18 +14,24 @@ from components.filetree import FileTree
 def load_css():
     # CSS to set background color
     basedir =  os.path.dirname(os.path.dirname(__file__))
-    provider = Gtk.CssProvider()
     with open(os.path.join(basedir, "gtk.css"), "rb") as f:
+        provider = Gtk.CssProvider()
         css = f.read()
         provider.load_from_data(css)
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(),
+            provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_THEME
+        )
     with open(os.path.join(basedir, "override.css"), "rb") as f:
+        provider = Gtk.CssProvider()
         css = f.read()
         provider.load_from_data(css)
-    Gtk.StyleContext.add_provider_for_screen(
-        Gdk.Screen.get_default(),
-        provider,
-        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-    )
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(),
+            provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
 
 
 class MasterWindow(Gtk.Window):

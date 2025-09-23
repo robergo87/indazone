@@ -19,6 +19,9 @@ box.focused {
     padding: 0px;
     margin: 0px;
 }
+sourceview {
+    background-color: #2e2e32;
+}
 terminal, notebook terminal {
     background-color: #2e2e32;
 }
