@@ -1,0 +1,85 @@
+treeview {
+    background-color: #252529;
+    color: #ccc;
+}
+treeview:selected, treeview:selected:focus {
+    background: #475254;
+    color: inherit; 
+    font-weight: bold;
+}
+box.unfocused {
+    background-color: #252529;
+    border: 2px dotted #252529;
+    padding: 0px;
+    margin: 0px;
+}
+box.focused {
+    background-color: #252529;
+    border: 2px dotted #89898e;
+    padding: 0px;
+    margin: 0px;
+}
+terminal, notebook terminal {
+    background-color: #2e2e32;
+}
+notebook {
+    border-style: none;
+    background-color: #2e2e32;
+}
+notebook > header {
+    background-color: #252529;
+    border-style: none;
+    border-bottom-style: none;
+    font-size: 8px;
+    min-height: 20px;
+    margin: 2px;
+}
+notebook > stack {
+    border-top-style: none;
+}
+notebook > header tab {
+    background-color: #2e2e32;
+    font-size: 10px;
+    padding: 1px 10px;
+    margin: 0;
+    color: #ccc;
+}
+notebook tab {
+    border-top: none;
+    border-bottom: none;
+    background-color: #252529;
+}
+notebook > header tab:selected, notebook > header tab:checked  {
+    color: white;
+    font-weight: bold;
+    background-color: #2e2e32;
+}
+window {
+    background-color: #2e3436;
+    border-style: none;
+}
+headerbar {
+    min-height: 24px;
+    background-color: #111;
+    color: #ccc;
+    padding: 0px 20px;
+    font-size: 10px;
+    border-style: none;
+}
+headerbar title {
+    font-size: 10px;
+    margin: 0;
+    padding: 0;
+}
+
+paned {
+    background-color: #17171a;
+    border-style: none;
+}
+paned separator {
+    border-style: none;
+    background-color: #17171a;
+    min-height: 4px;
+    min-width: 4px;
+}
+

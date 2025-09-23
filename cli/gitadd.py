@@ -15,11 +15,12 @@ def sample(argv):
         return
     items = [row.strip() for row in result.stdout.split("\n") if row.strip()]
     selector = ListSelector(items, multi=True)
-    selected = [row[3:] for row in selector.run()]
+    selected = [row[2:].strip() for row in selector.run()]
 
     if not selected:
         print("No files to add")
         return
+    print(["git", "add"] + selected)
     result = subprocess.run(
         ["git", "add"] + selected,    # command as list
         capture_output=True,

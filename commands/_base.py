@@ -50,7 +50,7 @@ class CommandParser(argparse.ArgumentParser):
         self.add_argument(
             "--workdir",
             type=str,
-            default=os.getcwd(),
+            default="",
             help="Working directory (default: current directory)"
         )
         self.add_argument(
@@ -65,9 +65,14 @@ class CommandParser(argparse.ArgumentParser):
             response = super().parse_args()
         else:
             response = super().parse_args(argv)
+        if not response.workdir:
+            workdir = os.getcwd()
         if not response.sessionid:
-            hash = hashlib.md5(response.workdir.encode()).hexdigest()
-            response.sessionid = f"rgide_{hash}"
+            if os.getenv("IDZ"):
+                response.sessionid = os.getenv("IDZ")
+            else:
+                hash = hashlib.md5(response.workdir.encode()).hexdigest()
+                response.sessionid = f"rgide_{hash}"
         return response
 
 

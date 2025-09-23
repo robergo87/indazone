@@ -32,7 +32,8 @@ class Terminal(Vte.Terminal):
         self.pos = -1
         #self.set_clear_background(False)
 
-        self.set_font(Pango.FontDescription("Monospace 9"))
+        font_desc = Pango.FontDescription("Monospace 9")
+        self.set_font(font_desc)
         self.set_allow_bold(True)
         self.set_bold_is_bright(True)
         self.set_hexpand(True)   # allow horizontal expansion
@@ -50,7 +51,23 @@ class Terminal(Vte.Terminal):
         self.connect("focus-out-event", self.group.on_focus_out)        
         self.connect("key-press-event", self.on_key_press)
         self.connect("child-exited", self.on_child_exited)
+        self.connect("size-allocate", self.on_size_allocate)
 
+    def get_font_cell_size(self):
+        desc = self.get_font()
+        layout = self.create_pango_layout("W")
+        layout.set_font_description(desc)
+        width, height = layout.get_pixel_size()
+        return width, height
+    
+    def on_size_allocate(self, widget, allocation):
+        """Update the PTY size to match the terminal widget size."""
+        char_width, char_height = self.get_font_cell_size()
+        if char_width > 0 and char_height > 0:
+            cols = max(1, allocation.width // char_width)
+            rows = max(1, allocation.height // char_height)
+            self.set_size(cols, rows)
+            
     def set_pos(self, pos):
         self.pos = pos
 
@@ -58,7 +75,7 @@ class Terminal(Vte.Terminal):
         self.group.terminal_closed(self.pos)
 
     def _on_realize(self, *args, **kwargs):
-        envv = ["TERM=xterm-256color"]
+        envv = ["TERM=xterm-256color", f"IDZ={self.master.sessionid}"]
         self.spawn_async(
             pty_flags=Vte.PtyFlags.DEFAULT,
             working_directory=None, 
@@ -74,6 +91,12 @@ class Terminal(Vte.Terminal):
     def on_key_press(self, widget, event):
         keyval, mods = event.keyval, event.state & Gtk.accelerator_get_default_mod_mask()
         keyname = Gtk.accelerator_name(keyval, mods)
+        if keyname == "<Primary><Shift>c" or keyname == "<Control><Shift>c":
+            self.copy_clipboard()
+            return True
+        if keyname == "<Primary><Shift>v" or keyname == "<Control><Shift>v":
+            self.paste_clipboard()
+            return True
         if keyval == Gdk.KEY_Menu:
             menu = ContextMenu(self)
             menu.popup_at_pointer(None)          

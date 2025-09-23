@@ -16,7 +16,7 @@ from unixsocket import start_server
 argparser = CommandParser("run")
 
 def execute(argparser, master=None, component=None):
-    win = MasterWindow(argparser.workdir)
+    win = MasterWindow(argparser.workdir, argparser.sessionid)
     win.connect("destroy", Gtk.main_quit)
     win.show_all()
     load_css()

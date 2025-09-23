@@ -13,73 +13,14 @@ from components.filetree import FileTree
 
 def load_css():
     # CSS to set background color
-    css = b"""
-    treeview {
-        background-color: #272d2f;
-        color: #ccc;
-    }
-    treeview:selected, treeview:selected:focus {
-        background: #475254;
-        color: inherit; 
-        font-weight: bold;
-    }
-    box.unfocused {
-        background-color: #272d2f;
-        border: 2px dotted #888888;
-        padding: 3px;
-        margin: 3px;
-    }
-    box.focused {
-        background-color: #272d2f;
-        border: 2px dotted #ffffff;
-        padding: 3px;
-        margin: 3px;
-    }
-    terminal, notebook terminal {
-        background-color: #272d2f;
-    }
-    notebook {
-        border: 2px solid #555;
-        background-color: #333;
-    }
-    notebook > header {
-        background-color: #333;
-        font-size: 8px;
-    }
-    notebook > header tab {
-        background-color: #272d2f;
-        font-size: 10px;
-        padding: 2px 10px;
-        margin: 0 1px;
-        color: #ccc;
-        border-color: #aaa;
-        border-top-left-radius: 4px;
-        border-top-right-radius: 4px;
-    }
-
-    notebook > header tab:selected, notebook > header tab:checked  {
-        color: white;
-        font-weight: bold;
-    }
-    window {
-        background-color: #2e3436;
-    }
-    headerbar {
-        background-color: #111;
-        color: #ccc;
-        padding: 2px 20px;
-        font-size: 10px;
-    }
-    paned > separator {
-        border-style: none;
-        background-color: #272d2f;
-        min-height: 2px;
-        min-width: 2px;
-    }
-        
-    """
+    basedir =  os.path.dirname(os.path.dirname(__file__))
     provider = Gtk.CssProvider()
-    provider.load_from_data(css)
+    with open(os.path.join(basedir, "gtk.css"), "rb") as f:
+        css = f.read()
+        provider.load_from_data(css)
+    with open(os.path.join(basedir, "override.css"), "rb") as f:
+        css = f.read()
+        provider.load_from_data(css)
     Gtk.StyleContext.add_provider_for_screen(
         Gdk.Screen.get_default(),
         provider,
@@ -88,9 +29,10 @@ def load_css():
 
 
 class MasterWindow(Gtk.Window):
-    def __init__(self, workdir):
+    def __init__(self, workdir, sessionid):
         super().__init__(title="GTK3 Code Editor")
         self.workdir = os.path.abspath(workdir)
+        self.sessionid = sessionid
         self.set_default_size(1400, 600)
 
         # Put editor inside a scrolled window
@@ -110,7 +52,8 @@ class MasterWindow(Gtk.Window):
         self.master.pack1(self.leftmenu)
         
         self.bufferlist = BufferList(self)
-        self.leftmenu.pack1(self.bufferlist, resize=True, shrink=True)
+        self.bufferlist.set_vexpand(True) 
+        self.leftmenu.pack1(self.bufferlist, resize=False, shrink=False)
         self.register_box(self.bufferlist)
         #self.bufferlist.set_vexpand(True)
 
@@ -140,7 +83,7 @@ class MasterWindow(Gtk.Window):
     def register_box(self, box):
         self.boxes[self.box_counter] = box
         self.box_counter += 1
-        return self.box_counter-1
+        return self.box_counter
 
     def remove_box(self, boxid):
        if boxid in self.boxes: 
@@ -183,10 +126,7 @@ class MasterWindow(Gtk.Window):
         for box in self.boxes.values():
             if box.get_style_context().has_class("focused"):
                 continue
-            coords = box.translate_coordinates(self, 0, 0)
-            if not coords:
-                continue
-            x, y = coords
+            x, y = box.translate_coordinates(self, 0, 0)
             allocation = box.get_allocation()
             x += allocation.width
             y += allocation.height / 2
@@ -214,10 +154,7 @@ class MasterWindow(Gtk.Window):
         for box in self.boxes.values():
             if box.get_style_context().has_class("focused"):
                 continue
-            coords = box.translate_coordinates(self, 0, 0)
-            if not coords:
-                continue
-            x, y = coords
+            x, y = box.translate_coordinates(self, 0, 0)
             allocation = box.get_allocation()
             y += allocation.height / 2
             if x < current_x:
@@ -242,13 +179,11 @@ class MasterWindow(Gtk.Window):
         for box in self.boxes.values():
             if box.get_style_context().has_class("focused"):
                 continue
-            coords = box.translate_coordinates(self, 0, 0)
-            if not coords:
-                continue
-            x, y = coords
+            x, y = box.translate_coordinates(self, 0, 0)
             allocation = box.get_allocation()
             x += allocation.width / 2
             y += allocation.height
+            print("Candidate", x, y)
             if y > current_y:
                 continue
             dist = (current_x - x)**2 + (current_y - y)**2
@@ -272,10 +207,7 @@ class MasterWindow(Gtk.Window):
         for box in self.boxes.values():
             if box.get_style_context().has_class("focused"):
                 continue
-            coords = box.translate_coordinates(self, 0, 0)
-            if not coords:
-                continue
-            x, y = coords
+            x, y = box.translate_coordinates(self, 0, 0)
             allocation = box.get_allocation()
             x += allocation.width / 2
             if y < current_y:

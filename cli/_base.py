@@ -11,7 +11,6 @@ def register_command(command: str):
     return inner
 
 def exec_cli():
-    print("CLI COMMANDS", BASE_COMMANDS)
     if len(sys.argv) < 2:
         return
     if sys.argv[1] not in BASE_COMMANDS:
@@ -78,6 +77,9 @@ class ListSelector:
                     self.move(1)
                 elif keypressed in [32, ord(' ')]:
                     self.select_item()
+                elif keypressed in [23, ord('\t')]:
+                    self.select_item()
+                    self.move(1)                
                 elif keypressed in [curses.KEY_ENTER, 10, 13]:
                     if not self.multi:
                         self.select_item()
@@ -88,6 +90,8 @@ class ListSelector:
                     else:
                         self.selected = -1
                     break
+                else:
+                    return "    "+str(keypressed)
             if self.multi:
                 return [self.options[i] for i, val in enumerate(self.selected) if val]
             else:

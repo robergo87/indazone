@@ -12,7 +12,12 @@ class BufferList(Gtk.Box):
         self.liststore = Gtk.ListStore(str, str, str, Gdk.RGBA)
         self.buffer_mapping = {}   
         self.treeview = Gtk.TreeView(model=self.liststore)
-        self.add(self.treeview)
+        self.treeview.set_headers_visible(False)
+
+        self.window = Gtk.ScrolledWindow()
+        self.pack_start(self.window, expand=True, fill=True, padding=0)
+        #self.window.add(self.treeview)
+        self.pack_start(self.treeview, expand=False, fill=True, padding=0)
         
         # Add a text column
         renderer = Gtk.CellRendererText()
@@ -26,7 +31,6 @@ class BufferList(Gtk.Box):
         column.add_attribute(renderer, "foreground-rgba", 3)
         self.treeview.append_column(column)
         
-        self.treeview.set_headers_visible(False)
 
         self.sort_model = Gtk.TreeModelSort(model=self.liststore)
         def sort_func(model, iter1, iter2, user_data):

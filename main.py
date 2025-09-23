@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import json
+import os
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -17,6 +18,8 @@ def start_imports():
     import pkgutil
     import importlib
 
+    currdir = os.getcwd()
+    os.chdir(os.path.dirname(__file__))
     for loader, name, ispkg in pkgutil.walk_packages(["commands"]):
         if name[0] == "_":
             continue
@@ -26,6 +29,7 @@ def start_imports():
         if name[0] == "_":
             continue
         importlib.import_module(f"cli.{name}")
+    os.chdir(currdir)
     
 if __name__ == "__main__":
     start_imports()

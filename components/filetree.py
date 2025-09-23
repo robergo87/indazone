@@ -2,9 +2,9 @@ import os
 import threading
 import shutil
 
-from gi.repository import Gtk, GtkSource, Gdk, Pango, Vte, GLib, GdkPixbuf
+from gi.repository import Gtk, GtkSource, Gdk, Gio, Pango, Vte, GLib, GdkPixbuf
 from commands._base import execute_command
-from inotify import INotify, flags
+#from inotify import INotify, flags
 
 from ._base import DialogYesNo, DialogPrompt
 
@@ -167,8 +167,9 @@ class FileTree(Gtk.Box):
         self.elements = {}
         self.treestore = Gtk.TreeStore(GdkPixbuf.Pixbuf, str, int, str)
 
-        self.worker_thread = threading.Thread(target=self.watcher, daemon=True)
-        self.worker_thread.start()
+
+        #self.worker_thread = threading.Thread(target=self.watcher, daemon=True)
+        #self.worker_thread.start()
 
         self.sort_model = Gtk.TreeModelSort(model=self.treestore)
         def sort_func(model, iter1, iter2, user_data):
@@ -188,7 +189,9 @@ class FileTree(Gtk.Box):
         self.treeview.set_property("enable-search", False)  # disables type-to-search
         self.treeview.set_activate_on_single_click(False)   # prevents single-click edit
 
-        self.add(self.treeview)
+        self.window = Gtk.ScrolledWindow()
+        self.pack_start(self.window, expand=True, fill=True, padding=0)
+        self.window.add(self.treeview)
 
         renderer_pixbuf = Gtk.CellRendererPixbuf()
         renderer_text = Gtk.CellRendererText()
@@ -244,16 +247,24 @@ class FileTree(Gtk.Box):
         selection = self.treeview.get_selection()
         model, tree_iter = selection.get_selected()
         return model[tree_iter][3]
-        
+
+    def trigger_update_tree(self, *args, **kwargs):
+        GLib.idle_add(self.update_tree)
+    
     def trigger_open(self):
         currpath = self.get_current_path()
         fullpath = os.path.join(self.master.workdir,currpath)
         if isdir(fullpath):
             if currpath in self.opened:
-                self.inotify.rm_watch(self.opened[currpath])
+                #self.inotify.rm_watch(self.opened[currpath])
+                self.opened[currpath].cancel()
                 del self.opened[currpath]
             else:
-                self.opened[currpath] = self.inotify.add_watch(fullpath, self.watch_flags)
+                gio_dir = Gio.File.new_for_path(fullpath)
+                monitor = gio_dir.monitor_directory(Gio.FileMonitorFlags.NONE, None)
+                monitor.connect("changed", self.trigger_update_tree)
+                self.opened[currpath] = monitor
+                #self.opened[currpath] = self.inotify.add_watch(fullpath, self.watch_flags)
             self.update_tree()
         else:
             self.master.editor.trigger_open(currpath)
@@ -368,14 +379,14 @@ class FileTree(Gtk.Box):
         dialog.destroy()
 
 
-    def watcher(self):
-        self.inotify = INotify()
-        self.watch_flags = flags.CREATE | flags.DELETE | flags.MODIFY | flags.DELETE_SELF | flags.MOVE_SELF| flags.MOVED_FROM | flags.MOVED_TO
-        self.inotify.add_watch(self.master.workdir, self.watch_flags)
-
-        while True:
-            for event in self.inotify.read():
-                GLib.idle_add(self.update_tree)
+    #def watcher(self):
+    #    self.inotify = INotify()
+    #    self.watch_flags = flags.CREATE | flags.DELETE | flags.MODIFY | flags.DELETE_SELF | flags.MOVE_SELF| flags.MOVED_FROM | flags.MOVED_TO
+    #    self.inotify.add_watch(self.master.workdir, self.watch_flags)
+    #
+    #    while True:
+    #        for event in self.inotify.read():
+    #            GLib.idle_add(self.update_tree)
 
     def on_button_press(self, widget, event):
         if event.type != Gdk.EventType.BUTTON_PRESS or event.button != 3: 

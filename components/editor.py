@@ -150,7 +150,7 @@ class Editor(Gtk.Box):
     
         font_desc = Gtk.Settings.get_default().get_property("gtk-font-name")
         self.font_family = "Monospace"
-        self.font_size = 10
+        self.font_size = 9
         self.trigger_update_font()
 
         self.view.set_tab_width(4)
