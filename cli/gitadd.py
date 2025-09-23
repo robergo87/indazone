@@ -14,13 +14,14 @@ def sample(argv):
         print(result.stderr)
         return
     items = [row.strip() for row in result.stdout.split("\n") if row.strip()]
+    if not items:
+        print("Up to date")
+    
     selector = ListSelector(items, multi=True)
     selected = [row[2:].strip() for row in selector.run()]
-
     if not selected:
         print("No files to add")
         return
-    print(["git", "add"] + selected)
     result = subprocess.run(
         ["git", "add"] + selected,    # command as list
         capture_output=True,
