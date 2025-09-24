@@ -1,4 +1,4 @@
-from os.path import dirname, abspath, join
+from os.path import dirname, abspath, join, exists
 
 import threading
 import queue
@@ -14,6 +14,7 @@ from unixsocket import start_server
 
 
 argparser = CommandParser("run")
+
 
 def execute(argparser, master=None, component=None):
     win = MasterWindow(argparser.workdir, argparser.sessionid)
@@ -38,17 +39,24 @@ def execute(argparser, master=None, component=None):
     worker_thread = threading.Thread(target=bg_server, daemon=True)
     worker_thread.start()
 
-    with open( join(abspath(dirname(dirname(__file__))), "config.cnf") ) as file:
-        for line in file:
-            line = line.strip()
-            if not line:
-                continue
-            args = shlex.split(line)
-            try:
-                execute_command(args, client=True, master=win)
-            except SystemExit:
-                print("Args causing error", args)
-                pass
+    def handle_cnf_file(cnf_path):
+        if not exists(cnf_path):
+            return
+        with open(cnf_path) as file:
+            for line in file:
+                line = line.strip()
+                if not line:
+                    continue
+                args = shlex.split(line)
+                try:
+                    execute_command(args, client=True, master=win)
+                except SystemExit:
+                    print("Args causing error", args)
+                    pass
+    cnf_path = join(abspath(dirname(dirname(__file__))), "config.cnf")
+    handle_cnf_file(cnf_path)
+    cnf_path = abspath("~/.config/indazone.cnf")
+    handle_cnf_file(cnf_path)
     Gtk.main()
     return "Done"
 
