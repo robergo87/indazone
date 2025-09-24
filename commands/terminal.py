@@ -11,6 +11,7 @@ def get_fonts():
         fam.get_name() for fam in fontmap.list_families() if fam.is_monospace()
     ]
 
+
 argparser = CommandParser("terminal")
 argparser.add_argument("command", type=str, choices=[
     "prev", "next", "first", "last", "open", "close", "split", "font-inc", "font-dec"

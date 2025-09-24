@@ -19,12 +19,13 @@ def exec_cli():
 
 
 class ListSelector:
-    def __init__(self, options, multi=False, formatter=None):
+    def __init__(self, options, multi=False, formatter=None, callback=None):
         self.options = options
         self.multi = multi
+        self.callback = callback
         if not formatter:
             def formatter(content):
-                return content
+                return str(content)
         self.formatter = formatter
         if multi:
             self.selected = [0] * len(options)
@@ -41,7 +42,7 @@ class ListSelector:
             option = self.options[index]
             selected = self.selected[index] if self.multi else self.selected == index
             icon = "+" if selected else " "
-            line = self.formatter(option[0:w-5]).ljust(w-5, " ")
+            line = self.formatter(option)[0:w-5].ljust(w-5, " ")
             if index == self.current:
                 self.stdscr.addstr(f"[{icon}] {line}\n", curses.A_REVERSE)
             else:
@@ -82,7 +83,17 @@ class ListSelector:
                 elif keypressed in [curses.KEY_ENTER, 10, 13]:
                     if not self.multi:
                         self.select_item()
-                    break
+                    if self.callback:
+                        if self.multi:
+                            self.callback([
+                                self.options[index] for index, val in enumerate(self.selected) 
+                            ])
+                            continue
+                        else:
+                            if self.callback(self.options[self.selected]):
+                                break
+                    else:
+                        break
                 elif keypressed in [27]:
                     if self.multi:
                         self.selected = []

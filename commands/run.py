@@ -8,7 +8,7 @@ import shlex
 from gi.repository import Gtk, GtkSource, Gdk, Pango, Vte, GLib
 
 from components.master import MasterWindow, load_css
-from commands._base import CommandParser, register_command, execute_command
+from commands._base import CommandParser, register_command, execute_command, register_client_command
 
 from unixsocket import start_server
 
@@ -61,4 +61,11 @@ def execute(argparser, master=None, component=None):
     return "Done"
 
 register_command("run", argparser, execute)
+
+
+argparser = CommandParser("workdir")
+def execute(args, master, component=None):
+    return master.workdir
+register_client_command("workdir", argparser, execute)
+
 
