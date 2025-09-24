@@ -109,7 +109,6 @@ class KeywordProvider(GObject.GObject, GtkSource.CompletionProvider):
             return False
         else: 
             self.last_line = self.last_line[0]
-        print("LL", self.last_line)
         return len(self.last_line) >= 3
 
     def do_get_icon(self):

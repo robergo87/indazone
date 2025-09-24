@@ -32,7 +32,9 @@ class Terminal(Vte.Terminal):
         self.pos = -1
         #self.set_clear_background(False)
 
-        font_desc = Pango.FontDescription("Monospace 9")
+        font_desc = Pango.FontDescription(
+            f"{master.terminal_font_family} {master.terminal_font_size}"
+        )
         self.set_font(font_desc)
         self.set_allow_bold(True)
         self.set_bold_is_bright(True)
@@ -128,6 +130,9 @@ class TerminalGroup(Gtk.Box):
         self.notebook.set_tab_pos(Gtk.PositionType.TOP)
         self.add(self.notebook)
         self.spawn_terminal()
+
+    def get_terminals(self):
+        return list(self.terminals.values())
 
     def set_pos(self, prnt, pos):
         self.pos = pos
@@ -254,6 +259,14 @@ class TerminalSplit(Gtk.VPaned):
         self.bottom_group = None
         self.replace(2, TerminalGroup(master))
 
+    
+    def get_terminals(self):
+        return (
+            (self.top_group.get_terminals() if self.top_group else [])
+            +
+            (self.bottom_group.get_terminals() if self.bottom_group else [])
+        )
+
     def move_focus(self):
         self.master.trigger_focus_up()
 
@@ -303,6 +316,10 @@ class TerminalAside(Gtk.Box):
         self.master = master
         self.content = None
         self.replace(1, TerminalGroup(master))
+
+    def get_terminals(self):
+        if self.content:
+            return self.content.get_terminals()
         
     def split(self, index):
         self.remove(self.content)

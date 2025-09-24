@@ -21,6 +21,8 @@ kb-set editor "<Primary>q" buffer close
 kb-set editor "<Alt>q" buffer close
 kb-set editor "<Alt>comma" buffer prev
 kb-set editor "<Alt>period" buffer next
+kb-set editor "<Primary>equal" editor font-inc
+kb-set editor "<Primary>minus" editor font-dec
 
 kb-set editor "<Control>q" buffer close
 kb-set editor "<Primary>q" buffer close
@@ -30,4 +32,6 @@ kb-set terminal "<Alt>period" terminal next
 kb-set terminal "<Primary>n" terminal open
 kb-set terminal "<Primary>z" terminal split
 kb-set terminal "<Alt>q" terminal close
+kb-set terminal "<Primary>equal" terminal font-inc
+kb-set terminal "<Primary>minus" terminal font-dec
 

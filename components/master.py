@@ -41,6 +41,8 @@ class MasterWindow(Gtk.Window):
         self.sessionid = sessionid
         self.set_default_size(1400, 600)
 
+        self.terminal_font_size = 10
+        self.terminal_font_family = "Monospace"
         # Put editor inside a scrolled window
 
         self.header = Gtk.HeaderBar(title="My Custom Title")
@@ -85,6 +87,15 @@ class MasterWindow(Gtk.Window):
         self.connect("key-press-event", self.on_key_press)
 
         self.filetree.grab_focus()
+
+    def trigger_update_terminal_font(self):
+        terminals = self.rightmenu.get_terminals()
+        font_desc = Pango.FontDescription(
+            f"{self.terminal_font_family} {self.terminal_font_size}"
+        )        
+        for terminal in terminals:
+            terminal.set_font(font_desc)
+        return bool(terminals)
 
     def register_box(self, box):
         self.boxes[self.box_counter] = box

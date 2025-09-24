@@ -11,10 +11,21 @@ def get_fonts():
         fam.get_name() for fam in fontmap.list_families() if fam.is_monospace()
     ]
 
-argparser = CommandParser("editor-fonts")
+argparser = CommandParser("editor")
+argparser.add_argument("command", type=str, choices=[
+    "fonts", "font-inc", "font-dec"
+])
 def execute(args, master, component=None):
-    return get_fonts()
-register_client_command("editor-fonts", argparser, execute)
+    if args.command == "fonts":
+        return get_fonts()
+    if args.command == "font-inc":
+        master.editor.font_size +=1
+        return master.editor.trigger_update_font()
+    if args.command == "font-dec":
+        master.editor.font_size -=1
+        return master.editor.trigger_update_font()
+    return False
+register_client_command("editor", argparser, execute)
 
 
 argparser = CommandParser("set-editor-font-family")

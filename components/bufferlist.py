@@ -34,8 +34,14 @@ class BufferList(Gtk.Box):
 
         self.sort_model = Gtk.TreeModelSort(model=self.liststore)
         def sort_func(model, iter1, iter2, user_data):
-            index1 = self.master.editor.buffer_list.index(model.get_value(iter1, 2))
-            index2 = self.master.editor.buffer_list.index(model.get_value(iter2, 2))
+            try:
+                index1 = self.master.editor.buffer_list.index(model.get_value(iter1, 2))
+            except ValueError:
+                index1 = -1
+            try:
+                index2 = self.master.editor.buffer_list.index(model.get_value(iter2, 2))
+            except ValueError:
+                index2 = -1
             if index1 == index2:
                 return 0
             return 1 if index1 > index2 else -1

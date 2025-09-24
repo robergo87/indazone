@@ -4,7 +4,6 @@ import curses
 BASE_COMMANDS = {}
 
 def register_command(command: str):
-    print("Register", command)
     def inner(callback):
         BASE_COMMANDS[command] = callback
         return callback
