@@ -13,22 +13,23 @@ class BufferList(Gtk.Box):
         self.buffer_mapping = {}   
         self.treeview = Gtk.TreeView(model=self.liststore)
         self.treeview.set_headers_visible(False)
+        self.treeview.set_property("enable-search", False)  # disables type-to-search
 
-        self.window = Gtk.ScrolledWindow()
-        self.pack_start(self.window, expand=True, fill=True, padding=0)
-        #self.window.add(self.treeview)
+        self.font_family = "Sans"
+        self.font_size = 10
+
         self.pack_start(self.treeview, expand=False, fill=True, padding=0)
         
         # Add a text column
-        renderer = Gtk.CellRendererText()
-        renderer.set_property("foreground-set", True)
+        self.renderer = Gtk.CellRendererText()
+        self.renderer.set_property("foreground-set", True)
     
-        column = Gtk.TreeViewColumn("Flag", renderer, text=0)
-        column.add_attribute(renderer, "foreground-rgba", 3)
+        column = Gtk.TreeViewColumn("Flag", self.renderer, text=0)
+        column.add_attribute(self.renderer, "foreground-rgba", 3)
         self.treeview.append_column(column)
 
-        column = Gtk.TreeViewColumn("Label", renderer, text=1)
-        column.add_attribute(renderer, "foreground-rgba", 3)
+        column = Gtk.TreeViewColumn("Label", self.renderer, text=1)
+        column.add_attribute(self.renderer, "foreground-rgba", 3)
         self.treeview.append_column(column)
         
 
@@ -57,6 +58,19 @@ class BufferList(Gtk.Box):
         self.treeview.set_can_focus(True)
         self.treeview.connect("focus-in-event", self.on_focus_in)
         self.treeview.connect("focus-out-event", self.on_focus_out)
+
+        self.update_font()
+
+    def update_font(self, now=False):
+        if now:
+            self.renderer.set_property("font", f"{self.font_family} {self.font_size}")
+            return True
+        def inner():
+            self.treeview.columns_autosize()
+            self.renderer.set_property("font", f"{self.font_family} {self.font_size}")
+            self.treeview.queue_draw()         
+        GLib.idle_add(inner)
+        return True
 
     def grab_focus(self):
         self.treeview.grab_focus()

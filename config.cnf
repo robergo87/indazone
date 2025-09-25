@@ -9,6 +9,8 @@ kb-set filetree "<Shift>n" filetree newdir
 kb-set filetree c filetree copy
 kb-set filetree d filetree delete
 kb-set filetree m filetree rename
+kb-set filetree "<Primary>equal" filetree font-inc
+kb-set filetree "<Primary>minus" filetree font-dec
 
 kb-set global "<Control>s" buffer save
 kb-set global "<Primary>s" buffer save

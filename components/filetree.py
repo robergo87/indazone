@@ -167,9 +167,8 @@ class FileTree(Gtk.Box):
         self.elements = {}
         self.treestore = Gtk.TreeStore(GdkPixbuf.Pixbuf, str, int, str)
 
-
-        #self.worker_thread = threading.Thread(target=self.watcher, daemon=True)
-        #self.worker_thread.start()
+        self.font_family = "Sans"
+        self.font_size = 10
 
         self.sort_model = Gtk.TreeModelSort(model=self.treestore)
         def sort_func(model, iter1, iter2, user_data):
@@ -194,19 +193,20 @@ class FileTree(Gtk.Box):
         self.window.add(self.treeview)
 
         renderer_pixbuf = Gtk.CellRendererPixbuf()
-        renderer_text = Gtk.CellRendererText()
+        self.renderer_text = Gtk.CellRendererText()
 
         column = Gtk.TreeViewColumn("Name")
         column.pack_start(renderer_pixbuf, False)   # icon goes first
-        column.pack_start(renderer_text, True)   # text goes after icon
+        column.pack_start(self.renderer_text, True)   # text goes after icon
         column.add_attribute(renderer_pixbuf, "pixbuf", 0)
-        column.add_attribute(renderer_text, "text", 1)
+        column.add_attribute(self.renderer_text, "text", 1)
         self.treeview.append_column(column)
 
         self.treeview.set_show_expanders(False)
         self.treeview.set_level_indentation(20)
         self.treeview.connect("row-activated", self.on_row_activated)
         self.update_tree()
+        self.update_font(now=True)
 
         self.binding = {}
         self.connect("key-press-event", self.on_key_press)
@@ -214,6 +214,17 @@ class FileTree(Gtk.Box):
         self.treeview.set_can_focus(True)
         self.treeview.connect("focus-in-event", self.on_focus_in)
         self.treeview.connect("focus-out-event", self.on_focus_out)
+
+    def update_font(self, now=False):
+        if now:
+            self.renderer_text.set_property("font", f"{self.font_family} {self.font_size}")
+            return True
+        def inner():
+            self.renderer_text.set_property("font", f"{self.font_family} {self.font_size}")
+            self.treeview.queue_draw()         
+            self.treeview.columns_autosize()
+        GLib.idle_add(inner)
+        return True
 
     def grab_focus(self):
         self.treeview.grab_focus()

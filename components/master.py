@@ -14,15 +14,15 @@ from components.filetree import FileTree
 def load_css():
     # CSS to set background color
     basedir =  os.path.dirname(os.path.dirname(__file__))
-    with open(os.path.join(basedir, "gtk.css"), "rb") as f:
-        provider = Gtk.CssProvider()
-        css = f.read()
-        provider.load_from_data(css)
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(),
-            provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_THEME
-        )
+    #with open(os.path.join(basedir, "gtk.css"), "rb") as f:
+    #    provider = Gtk.CssProvider()
+    #    css = f.read()
+    #    provider.load_from_data(css)
+    #    Gtk.StyleContext.add_provider_for_screen(
+    #        Gdk.Screen.get_default(),
+    #        provider,
+    #        Gtk.STYLE_PROVIDER_PRIORITY_THEME
+    #    )
     with open(os.path.join(basedir, "override.css"), "rb") as f:
         provider = Gtk.CssProvider()
         css = f.read()
@@ -32,6 +32,77 @@ def load_css():
             provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
+
+
+class TitleBar(Gtk.EventBox):
+    def __init__(self, master, title, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.master = master
+        self.get_style_context().add_class("titlebar")
+        self.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON1_MOTION_MASK)
+        self.connect("button-press-event", self.on_press)
+        self.master.connect("window-state-event", self.on_window_state_event)
+
+        self.box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        self.box.set_border_width(4)
+        self.add(self.box)
+        self.label = Gtk.Label(label=title)
+        self.box.pack_start(self.label, True, True, 0)
+
+        close_icon = Gtk.Image.new_from_icon_name("window-close-symbolic", Gtk.IconSize.BUTTON)
+        self.close_btn = Gtk.Button()
+        close_icon = Gtk.Image.new_from_icon_name("window-close-symbolic", Gtk.IconSize.BUTTON)
+        self.close_btn.add(close_icon)
+        self.close_btn.set_relief(Gtk.ReliefStyle.NONE)
+        self.close_btn.connect("clicked", lambda b: self.master.close())
+        self.box.pack_end(self.close_btn, False, False, 0)
+
+        self.restore_btn = Gtk.Button()
+        self.max_icon = Gtk.Image.new_from_icon_name("window-maximize-symbolic", Gtk.IconSize.BUTTON)
+        self.restore_icon = Gtk.Image.new_from_icon_name("window-restore-symbolic", Gtk.IconSize.BUTTON)
+        
+        self.restore_btn.add(self.max_icon)
+        self.restore_btn.set_relief(Gtk.ReliefStyle.NONE)
+        self.restore_btn.connect("clicked", self.on_toggle_maximize)
+        self.box.pack_end(self.restore_btn, False, False, 0)
+
+        self.min_btn = Gtk.Button()
+        min_icon = Gtk.Image.new_from_icon_name("window-minimize-symbolic", Gtk.IconSize.BUTTON)
+        self.min_btn.add(min_icon)
+        self.min_btn.set_relief(Gtk.ReliefStyle.NONE)
+        self.min_btn.connect("clicked", lambda b: self.master.iconify())
+        self.box.pack_end(self.min_btn, False, False, 0)
+
+    def on_window_state_event(self, widget, event):
+        if self.master.is_maximized():
+            self.set_max_icon(self.restore_icon)
+        else:
+            self.set_max_icon(self.max_icon)
+
+    def set_max_icon(self, icon_widget):
+        for child in self.restore_btn.get_children():
+            self.restore_btn.remove(child)
+        self.restore_btn.add(icon_widget)
+        self.restore_btn.show_all()
+
+    def on_toggle_maximize(self, button):
+        if self.master.is_maximized():
+            self.master.unmaximize()
+            self.set_max_icon(self.max_icon)
+        else:
+            self.master.maximize()
+            self.set_max_icon(self.restore_icon)
+
+    def on_press(self, widget, event):
+        if event.type == Gdk.EventType._2BUTTON_PRESS and event.button == 1:
+            self.on_toggle_maximize(self.restore_btn)
+            return True
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 1:
+            self.master.begin_move_drag(event.button, int(event.x_root), int(event.y_root), event.time)
+        return True
+
+        #titlebar_box.pack_end(close_btn, False, False, 0)
+
 
 
 class MasterWindow(Gtk.Window):
@@ -45,16 +116,23 @@ class MasterWindow(Gtk.Window):
         self.terminal_font_family = "Monospace"
         # Put editor inside a scrolled window
 
-        self.header = Gtk.HeaderBar(title="My Custom Title")
-        self.header.set_show_close_button(True)
-        self.set_titlebar(self.header)
-
+        #self.header = Gtk.HeaderBar(title="My Custom Title")
+        #self.header.set_show_close_button(True)
+        #self.set_titlebar(self.header)
+        #self.set_decorated(False)
         self.box_counter = 0
         self.boxes = {}
         self.binding = {}
-        
+ 
+        self.vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.add(self.vbox)
+       
+        self.titlebar = TitleBar(self, "InDaZone Editor")
+        self.vbox.pack_start(self.titlebar, False, False, 0)
+        self.set_decorated(False)
+
         self.master = Gtk.HPaned()
-        self.add(self.master)
+        self.vbox.pack_start(self.master, True, True, 0)
 
         self.leftmenu = Gtk.VPaned()
         self.master.pack1(self.leftmenu)
@@ -79,7 +157,7 @@ class MasterWindow(Gtk.Window):
 
         self.rightmenu = TerminalAside(self)
         self.main_content.pack2(self.rightmenu, resize=True, shrink=True)
-        
+   
 
         self.master.set_position(250)
         self.main_content.set_position(600)
