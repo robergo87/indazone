@@ -276,7 +276,7 @@ class FileTree(Gtk.Box):
                 monitor.connect("changed", self.trigger_update_tree)
                 self.opened[currpath] = monitor
                 #self.opened[currpath] = self.inotify.add_watch(fullpath, self.watch_flags)
-            self.update_tree()
+            self.trigger_update_tree()
         else:
             self.master.editor.trigger_open(currpath)
 
@@ -389,16 +389,6 @@ class FileTree(Gtk.Box):
             self.trigger_force_delete()
         dialog.destroy()
 
-
-    #def watcher(self):
-    #    self.inotify = INotify()
-    #    self.watch_flags = flags.CREATE | flags.DELETE | flags.MODIFY | flags.DELETE_SELF | flags.MOVE_SELF| flags.MOVED_FROM | flags.MOVED_TO
-    #    self.inotify.add_watch(self.master.workdir, self.watch_flags)
-    #
-    #    while True:
-    #        for event in self.inotify.read():
-    #            GLib.idle_add(self.update_tree)
-
     def on_button_press(self, widget, event):
         if event.type != Gdk.EventType.BUTTON_PRESS or event.button != 3: 
             return False
@@ -454,7 +444,8 @@ class FileTree(Gtk.Box):
         for path, elem in list(self.elements.items()):
             if elem["updated"]:
                 continue
-            self.treestore.remove(elem["element"])
+            if elem["element"].parent:
+                self.treestore.remove(elem["element"])
             del self.elements[path]
         self.treeview.expand_all()
         
