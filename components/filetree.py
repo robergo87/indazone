@@ -444,8 +444,7 @@ class FileTree(Gtk.Box):
         for path, elem in list(self.elements.items()):
             if elem["updated"]:
                 continue
-            if elem["element"].parent:
-                self.treestore.remove(elem["element"])
+            self.treestore.remove(elem["element"])
             del self.elements[path]
         self.treeview.expand_all()
         
