@@ -215,6 +215,11 @@ class FileTree(Gtk.Box):
         self.treeview.connect("focus-in-event", self.on_focus_in)
         self.treeview.connect("focus-out-event", self.on_focus_out)
 
+        gio_dir = Gio.File.new_for_path(self.master.workdir)
+        self.root_monitor = gio_dir.monitor_directory(Gio.FileMonitorFlags.NONE, None)
+        self.root_monitor.connect("changed", self.trigger_update_tree)
+
+
     def update_font(self, now=False):
         if now:
             self.renderer_text.set_property("font", f"{self.font_family} {self.font_size}")
@@ -260,6 +265,7 @@ class FileTree(Gtk.Box):
         return model[tree_iter][3]
 
     def trigger_update_tree(self, *args, **kwargs):
+        print("TRIGGER UPDATE")
         GLib.idle_add(self.update_tree)
     
     def trigger_open(self):
@@ -310,6 +316,7 @@ class FileTree(Gtk.Box):
         else:
             touch(newpath)
         dialog.destroy()
+        self.trigger_update_tree()
 
     def trigger_new_file(self):
         return self.new_file_or_dir()
@@ -337,6 +344,7 @@ class FileTree(Gtk.Box):
         newpath = os.path.join(self.master.workdir, newfile)
         copy(fullpath, newpath)
         dialog.destroy()
+        self.trigger_update_tree()
 
     def trigger_chmod(self):
         currpath = self.get_current_path()
@@ -357,6 +365,7 @@ class FileTree(Gtk.Box):
             return            
         set_chmod(fullpath, newchmod)
         dialog.destroy()
+        self.trigger_update_tree()
         
     def trigger_rename(self):
         currpath = self.get_current_path()
@@ -377,6 +386,7 @@ class FileTree(Gtk.Box):
         newpath = os.path.join(self.master.workdir, newfile)
         rename(fullpath, newpath)
         dialog.destroy()
+        self.trigger_update_tree()
 
     def trigger_delete(self):
         currpath = self.get_current_path()
@@ -388,6 +398,7 @@ class FileTree(Gtk.Box):
         if response == Gtk.ResponseType.YES:
             self.trigger_force_delete()
         dialog.destroy()
+        self.trigger_update_tree()
 
     def on_button_press(self, widget, event):
         if event.type != Gdk.EventType.BUTTON_PRESS or event.button != 3: 
@@ -406,47 +417,86 @@ class FileTree(Gtk.Box):
         self.trigger_open()
         return True
 
-    def add_dir_to_tree(self, basedir, dirpath):
+
+    def iterate_children(self, parent):
+        child = self.treestore.iter_children(parent)
+        while child:
+            yield child
+            for subchild in self.iterate_children(child):
+                yield subchild
+            child = self.treestore.iter_next(child)
+
+    def iterate_tree(self):
+        iter_ = self.treestore.get_iter_first()
+        while iter_:
+            yield iter_
+            # descend into children
+            for child in self.iterate_children(iter_):
+                yield child
+            iter_ = self.treestore.iter_next(iter_)
+
+    def get_dir_contents(self, basedir, dirpath):
+        retval = {}
+
         fulldirpath = os.path.join(basedir, dirpath) if dirpath else basedir
-        files = listdir(fulldirpath)
+        try:
+            files = listdir(fulldirpath)
+        except Exception as e:
+            files = []
+            raise e
         files.sort()
         for filename in files:
             if filename in (".", ".."):
                 continue
             currpath = os.path.join(dirpath, filename) if dirpath else filename
             fullcurrpath = os.path.join(basedir, currpath)
-            if currpath in self.elements:
-                self.elements[currpath]["updated"] = True
-                continue
-            row = {
-                "updated": True,
+            is_dir = 1 if os.path.isdir(fullcurrpath) else 0
+            retval[currpath] = {
+                "is_dir": is_dir,
                 "filename": filename,
                 "path": currpath,
                 "parent": dirpath
             }
-            parent = self.elements[dirpath]["element"] if dirpath else None
-            is_dir = 1 if os.path.isdir(fullcurrpath) else 0
-            if is_dir:
-                icon = FOLDER_OPEN if currpath in self.opened else FOLDER
-            else:
-                icon = FILE
-            treestore_row = [icon , "  "+row["filename"], is_dir, currpath]
-            row["element"] = self.treestore.append(parent, treestore_row)
-            self.elements[currpath] = row
-                
+        return retval
+
     def update_tree(self):
         basedir = self.master.workdir
-        for path, elem in self.elements.items():
-            elem["updated"] = False
-        self.add_dir_to_tree(basedir, None)
+        contents = self.get_dir_contents(basedir, None)
         for dirpath in self.opened:
-            self.add_dir_to_tree(basedir, dirpath)
-        for path, elem in list(self.elements.items()):
-            if elem["updated"]:
+            contents |= self.get_dir_contents(basedir, dirpath)
+
+        parents = {}
+        to_remove = []
+        for node in list(self.iterate_tree()):
+            is_dir = self.treestore.get_value(node, 2)
+            currpath = self.treestore.get_value(node, 3)
+            if currpath not in contents:
+                print("removing", currpath, flush=True)
+                to_remove.append(node)
+                if currpath in self.opened:
+                    self.opened[currpath].cancel()
+                    del self.opened[currpath]
                 continue
-            self.treestore.remove(elem["element"])
-            del self.elements[path]
+            if is_dir:
+                parents[currpath] = node
+            del contents[currpath]
+        for node in to_remove[::-1]:
+            self.treestore.remove(node)
+
+        for row in contents.values():
+            print("adding", row["path"])
+            if row["parent"]:
+                if row["parent"] not in parents:
+                    continue
+                parent = parents[row["parent"]]
+            else:
+                parent = None
+            fullcurrpath = os.path.join(basedir, row["path"])
+            if row["is_dir"]:
+                icon = FOLDER_OPEN if row["path"] in self.opened else FOLDER
+            else:
+                icon = FILE
+            treestore_row = [icon , "  "+row["filename"], row["is_dir"], row["path"]]
+            self.treestore.append(parent, treestore_row)
         self.treeview.expand_all()
-        
-        
 

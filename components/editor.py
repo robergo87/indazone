@@ -307,13 +307,21 @@ class Editor(Gtk.Box):
         return False
 
     def trigger_focus(self, filepath, bubble=True):
+        if self.current_buffer:
+            old_buffer_data = self.buffers[self.current_buffer]
+            buffer = old_buffer_data["buffer"]
+            old_buffer_data["iter"] = buffer.get_iter_at_mark(buffer.get_insert())
+            print("save pos", old_buffer_data["iter"])    
         if filepath not in self.buffers:
             return False
         buffer_data = self.buffers[filepath]
-        self.view.set_buffer(buffer_data["buffer"])
+        buffer = buffer_data["buffer"]
+        self.view.set_buffer(buffer)
         self.view.set_tab_width(buffer_data["tab_width"])
         self.view.set_insert_spaces_instead_of_tabs(buffer_data["spaces_to_tabs"])
         self.current_buffer = filepath
+        buffer.place_cursor(buffer_data["iter"])
+        self.view.scroll_to_iter(buffer_data["iter"], 0.25, use_align=False, xalign=0, yalign=0)        
         self.grab_focus()
         if bubble:
             self.master.bufferlist.update_buffers()
@@ -384,7 +392,8 @@ class Editor(Gtk.Box):
             "language":  language,
             "spaces_to_tabs": True,
             "tab_width": 4,
-            "mode": "saved"
+            "mode": "saved",
+            "iter": buffer.get_start_iter()
         }
         self.buffer_list.append(filepath)
         return self.trigger_focus(filepath)
