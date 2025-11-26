@@ -471,7 +471,6 @@ class FileTree(Gtk.Box):
             is_dir = self.treestore.get_value(node, 2)
             currpath = self.treestore.get_value(node, 3)
             if currpath not in contents:
-                print("removing", currpath, flush=True)
                 to_remove.append(node)
                 if currpath in self.opened:
                     self.opened[currpath].cancel()
@@ -484,7 +483,6 @@ class FileTree(Gtk.Box):
             self.treestore.remove(node)
 
         for row in contents.values():
-            print("adding", row["path"])
             if row["parent"]:
                 if row["parent"] not in parents:
                     continue
