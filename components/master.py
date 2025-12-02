@@ -221,7 +221,11 @@ class MasterWindow(Gtk.Window):
         for box in self.boxes.values():
             if box.get_style_context().has_class("focused"):
                 continue
-            x, y = box.translate_coordinates(self, 0, 0)
+            coords = box.translate_coordinates(self, 0, 0)
+            if not coords:
+                print("Coords not found")
+                continue
+            x, y = coords
             allocation = box.get_allocation()
             x += allocation.width
             y += allocation.height / 2
@@ -249,7 +253,11 @@ class MasterWindow(Gtk.Window):
         for box in self.boxes.values():
             if box.get_style_context().has_class("focused"):
                 continue
-            x, y = box.translate_coordinates(self, 0, 0)
+            coords = box.translate_coordinates(self, 0, 0)
+            if not coords:
+                print("Coords not found")
+                continue
+            x, y = coords
             allocation = box.get_allocation()
             y += allocation.height / 2
             if x < current_x:
@@ -274,7 +282,11 @@ class MasterWindow(Gtk.Window):
         for box in self.boxes.values():
             if box.get_style_context().has_class("focused"):
                 continue
-            x, y = box.translate_coordinates(self, 0, 0)
+            coords = box.translate_coordinates(self, 0, 0)
+            if not coords:
+                print("Coords not found")
+                continue
+            x, y = coords
             allocation = box.get_allocation()
             x += allocation.width / 2
             y += allocation.height
@@ -302,7 +314,11 @@ class MasterWindow(Gtk.Window):
         for box in self.boxes.values():
             if box.get_style_context().has_class("focused"):
                 continue
-            x, y = box.translate_coordinates(self, 0, 0)
+            coords = box.translate_coordinates(self, 0, 0)
+            if not coords:
+                print("Coords not found")
+                continue
+            x, y = coords
             allocation = box.get_allocation()
             x += allocation.width / 2
             if y < current_y:

@@ -307,11 +307,10 @@ class Editor(Gtk.Box):
         return False
 
     def trigger_focus(self, filepath, bubble=True):
-        if self.current_buffer:
+        if self.current_buffer and self.current_buffer in self.buffers:
             old_buffer_data = self.buffers[self.current_buffer]
             buffer = old_buffer_data["buffer"]
             old_buffer_data["iter"] = buffer.get_iter_at_mark(buffer.get_insert())
-            print("save pos", old_buffer_data["iter"])    
         if filepath not in self.buffers:
             return False
         buffer_data = self.buffers[filepath]

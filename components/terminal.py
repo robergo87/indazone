@@ -77,7 +77,10 @@ class Terminal(Vte.Terminal):
         self.group.terminal_closed(self.pos)
 
     def _on_realize(self, *args, **kwargs):
-        envv = ["TERM=xterm-256color", f"IDZ={self.master.sessionid}"]
+        envv = (
+            [f"{k}={v}" for k, v in dict(os.environ).items()] +
+            ["TERM=xterm-256color", f"IDZ={self.master.sessionid}"]
+        )
         self.spawn_async(
             pty_flags=Vte.PtyFlags.DEFAULT,
             working_directory=None, 
