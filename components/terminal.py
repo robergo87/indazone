@@ -42,6 +42,8 @@ class Terminal(Vte.Terminal):
         self.set_vexpand(True)
         
         # Tango pallete
+        self.label = Gtk.Label(label="")
+        self.update_label()
         self.set_colors(None, None, TERMINAL_PALETTE)
         self.set_scroll_on_output(True)
         self.set_scroll_on_keystroke(True)
@@ -54,6 +56,18 @@ class Terminal(Vte.Terminal):
         self.connect("key-press-event", self.on_key_press)
         self.connect("child-exited", self.on_child_exited)
         self.connect("size-allocate", self.on_size_allocate)
+        self.connect("contents-changed", self.on_contents_changed)
+
+    def update_label(self):
+        uri = self.get_current_directory_uri()
+        app_cwd = os.getcwd()
+        if uri:
+            cwd, _ = GLib.filename_from_uri(uri)
+        else:
+            cwd = app_cwd
+        if cwd.startswith(app_cwd):
+            cwd = "."+cwd[len(app_cwd):]
+        self.label.set_text(f"BASH: {cwd}")
 
     def get_font_cell_size(self):
         desc = self.get_font()
@@ -61,7 +75,10 @@ class Terminal(Vte.Terminal):
         layout.set_font_description(desc)
         width, height = layout.get_pixel_size()
         return width, height
-    
+
+    def on_contents_changed(self, widget):
+        self.update_label()    
+
     def on_size_allocate(self, widget, allocation):
         """Update the PTY size to match the terminal widget size."""
         char_width, char_height = self.get_font_cell_size()
@@ -79,7 +96,9 @@ class Terminal(Vte.Terminal):
     def _on_realize(self, *args, **kwargs):
         envv = (
             [f"{k}={v}" for k, v in dict(os.environ).items()] +
-            ["TERM=xterm-256color", f"IDZ={self.master.sessionid}"]
+            [
+                "TERM=xterm-256color", f"IDZ={self.master.sessionid}", 
+                'PROMPT_COMMAND=printf "\\033]7;file://%s%s\\007" "$HOSTNAME" "$PWD"']
         )
         self.spawn_async(
             pty_flags=Vte.PtyFlags.DEFAULT,
@@ -164,7 +183,7 @@ class TerminalGroup(Gtk.Box):
     def spawn_terminal(self):
         terminal = Terminal(self.master, self)
         self.terminals[self.counter] = terminal
-        self.notebook.append_page(terminal, Gtk.Label(label=f"Term {self.counter}"))
+        self.notebook.append_page(terminal, terminal.label)
         terminal.show_all()
         terminal.set_pos(self.counter)
         if self.current_terminal is None:
